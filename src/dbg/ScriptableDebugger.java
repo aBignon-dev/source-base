@@ -21,12 +21,71 @@ public class ScriptableDebugger {
     private Class debugClass;
     private VirtualMachine vm;
     private int startLineNumber = 6;
+    private boolean stepMode = false;
+
+    // ... autres méthodes inchangées ...
+
     public VirtualMachine connectAndLaunchVM() throws IOException, IllegalConnectorArgumentsException, VMStartException {
         LaunchingConnector launchingConnector = Bootstrap.virtualMachineManager().defaultConnector();
         Map<String, Connector.Argument> arguments = launchingConnector.defaultArguments();
         arguments.get("main").setValue(debugClass.getName());
         VirtualMachine vm = launchingConnector.launch(arguments);
         return vm;
+    }
+
+    private void handleEvent(Event event) throws AbsentInformationException {
+        if (event instanceof ClassPrepareEvent) {
+            handleClassPrepareEvent((ClassPrepareEvent) event);
+        } else if (event instanceof BreakpointEvent) {
+            waitForUserCommand();
+            if (stepMode) {
+                enableStepRequest((LocatableEvent) event);
+            }
+        } else if (event instanceof StepEvent) {
+            waitForUserCommand();
+            if (stepMode) {
+                enableStepRequest((LocatableEvent) event);
+            }
+        } else if (event instanceof VMDisconnectEvent) {
+            handleVMDisconnectEvent((VMDisconnectEvent) event);
+        }
+    }
+
+    private void waitForUserCommand() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter 'step' to continue step-by-step or anything else to run to completion: ");
+        String input = scanner.nextLine();
+        if (input.equalsIgnoreCase("step")) {
+            stepMode = true;
+        } else {
+            stepMode = false;
+            disableAllStepRequests();
+            vm.resume();
+        }
+    }
+
+    private void disableAllStepRequests() {
+        for (StepRequest request : vm.eventRequestManager().stepRequests()) {
+            request.disable();
+            vm.eventRequestManager().deleteEventRequest(request);
+        }
+    }
+
+    public void enableStepRequest(LocatableEvent event) {
+        // Disable existing step requests for the thread
+        for (StepRequest request : vm.eventRequestManager().stepRequests()) {
+            if (request.thread().equals(event.thread())) {
+                request.disable();
+                vm.eventRequestManager().deleteEventRequest(request);
+            }
+        }
+
+        // Create and enable a new step request
+        StepRequest stepRequest = vm.eventRequestManager()
+            .createStepRequest(event.thread(),
+                StepRequest.STEP_MIN,
+                StepRequest.STEP_OVER);
+        stepRequest.enable();
     }
     public void attachTo(Class debuggeeClass) {
 
@@ -70,27 +129,6 @@ public class ScriptableDebugger {
         }
     }
 
-    private void handleEvent(Event event) throws AbsentInformationException {
-        if (event instanceof ClassPrepareEvent) {
-            handleClassPrepareEvent((ClassPrepareEvent) event);
-        } else if (event instanceof BreakpointEvent || event instanceof StepEvent) {
-            waitNextInput();
-            enableStepRequest((LocatableEvent) event);
-        } else if (event instanceof VMDisconnectEvent) {
-            handleVMDisconnectEvent((VMDisconnectEvent) event);
-        }
-    }
-
-    private void waitNextInput() {
-        Scanner scanner = new Scanner(System.in);
-        String input = "";
-        System.out.print("Enter 'step' to continue step-by-step or anything else to run to completion: ");
-        input = scanner.nextLine();
-        if (!input.equalsIgnoreCase("step")) {
-            vm.resume();
-        }
-    }
-
     private void handleVMDisconnectEvent(VMDisconnectEvent event) {
         System.out.println("End of program");
         InputStreamReader reader = new InputStreamReader(vm.process().getInputStream());
@@ -104,26 +142,8 @@ public class ScriptableDebugger {
     }
 
     private void handleClassPrepareEvent(ClassPrepareEvent event) throws AbsentInformationException {
-        setBreakPoint(debugClass.getName(), startLineNumber++);
+        setBreakPoint(debugClass.getName(), startLineNumber);
     }
-
-    public void enableStepRequest(LocatableEvent event) {
-        // Disable existing step requests for the thread
-        for (StepRequest request : vm.eventRequestManager().stepRequests()) {
-            if (request.thread().equals(event.thread())) {
-                request.disable();
-                vm.eventRequestManager().deleteEventRequest(request);
-            }
-        }
-
-        // Create and enable a new step request
-        StepRequest stepRequest = vm.eventRequestManager()
-            .createStepRequest(event.thread(),
-                StepRequest.STEP_MIN,
-                StepRequest.STEP_OVER);
-        stepRequest.enable();
-    }
-
 
     public void setBreakPoint(String className, int lineNumber) throws AbsentInformationException {
         for (ReferenceType targetClass : vm.allClasses()) {
