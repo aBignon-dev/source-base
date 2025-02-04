@@ -20,7 +20,7 @@ public class ScriptableDebugger {
 
     private Class debugClass;
     private VirtualMachine vm;
-
+    private int startLineNumber = 6;
     public VirtualMachine connectAndLaunchVM() throws IOException, IllegalConnectorArgumentsException, VMStartException {
         LaunchingConnector launchingConnector = Bootstrap.virtualMachineManager().defaultConnector();
         Map<String, Connector.Argument> arguments = launchingConnector.defaultArguments();
@@ -73,9 +73,9 @@ public class ScriptableDebugger {
     private void handleEvent(Event event) throws AbsentInformationException {
         if (event instanceof ClassPrepareEvent) {
             handleClassPrepareEvent((ClassPrepareEvent) event);
-        } else if (event instanceof BreakpointEvent) {
+        } else if (event instanceof BreakpointEvent || event instanceof StepEvent) {
             waitNextInput();
-            enableStepRequest((BreakpointEvent) event);
+            enableStepRequest((LocatableEvent) event);
         } else if (event instanceof VMDisconnectEvent) {
             handleVMDisconnectEvent((VMDisconnectEvent) event);
         }
@@ -84,9 +84,10 @@ public class ScriptableDebugger {
     private void waitNextInput() {
         Scanner scanner = new Scanner(System.in);
         String input = "";
-        while (!input.equalsIgnoreCase("step")) {
-            System.out.print("Enter 'step' to continue: ");
-            input = scanner.nextLine();
+        System.out.print("Enter 'step' to continue step-by-step or anything else to run to completion: ");
+        input = scanner.nextLine();
+        if (!input.equalsIgnoreCase("step")) {
+            vm.resume();
         }
     }
 
@@ -103,10 +104,19 @@ public class ScriptableDebugger {
     }
 
     private void handleClassPrepareEvent(ClassPrepareEvent event) throws AbsentInformationException {
-        setBreakPoint(debugClass.getName(), 6);
+        setBreakPoint(debugClass.getName(), startLineNumber++);
     }
 
     public void enableStepRequest(LocatableEvent event) {
+        // Disable existing step requests for the thread
+        for (StepRequest request : vm.eventRequestManager().stepRequests()) {
+            if (request.thread().equals(event.thread())) {
+                request.disable();
+                vm.eventRequestManager().deleteEventRequest(request);
+            }
+        }
+
+        // Create and enable a new step request
         StepRequest stepRequest = vm.eventRequestManager()
             .createStepRequest(event.thread(),
                 StepRequest.STEP_MIN,
