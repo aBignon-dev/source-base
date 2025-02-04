@@ -8,6 +8,8 @@ import com.sun.jdi.connect.VMStartException;
 import com.sun.jdi.event.*;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.Map;
 
 public class ScriptableDebugger {
@@ -49,8 +51,15 @@ public class ScriptableDebugger {
         while ((eventSet = vm.eventQueue().remove()) != null) {
             for (Event event : eventSet) {
                 if(event instanceof VMDisconnectEvent) {
-                    System.out.println("===End of program.");
-                    return;
+                    System.out.println("End of program");
+                    InputStreamReader reader = new InputStreamReader(vm.process().getInputStream());
+                    OutputStreamWriter writer = new OutputStreamWriter(System.out);
+                    try {
+                        reader.transferTo(writer);
+                        writer.flush();
+                    } catch (IOException e) {
+                        System.out.println("Target VM input stream reading error.");
+                    }
                 }
                 System.out.println(event.toString());
                 vm.resume();
