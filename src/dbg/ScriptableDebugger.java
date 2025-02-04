@@ -22,9 +22,15 @@ public class ScriptableDebugger {
     private VirtualMachine vm;
     private int startLineNumber = 6;
     private boolean stepMode = false;
-
+    private JDICommandManager commandManager;
+    private ThreadReference currentThread;
     // ... autres méthodes inchangées ...
-
+    public void initializeCommands() {
+        commandManager = new JDICommandManager();
+        commandManager.registerCommand(new JDIStepCommand(vm, currentThread));
+        commandManager.registerCommand(new JDIStepOverCommand(vm, currentThread));
+        commandManager.registerCommand(new JDIContinueCommand(vm, currentThread));
+    }
     public VirtualMachine connectAndLaunchVM() throws IOException, IllegalConnectorArgumentsException, VMStartException {
         LaunchingConnector launchingConnector = Bootstrap.virtualMachineManager().defaultConnector();
         Map<String, Connector.Argument> arguments = launchingConnector.defaultArguments();
@@ -36,16 +42,11 @@ public class ScriptableDebugger {
     private void handleEvent(Event event) throws AbsentInformationException {
         if (event instanceof ClassPrepareEvent) {
             handleClassPrepareEvent((ClassPrepareEvent) event);
-        } else if (event instanceof BreakpointEvent) {
+        } else if (event instanceof BreakpointEvent || event instanceof StepEvent) {
+            LocatableEvent locatableEvent = (LocatableEvent) event;
+            currentThread = locatableEvent.thread();
+            initializeCommands();
             waitForUserCommand();
-            if (stepMode) {
-                enableStepRequest((LocatableEvent) event);
-            }
-        } else if (event instanceof StepEvent) {
-            waitForUserCommand();
-            if (stepMode) {
-                enableStepRequest((LocatableEvent) event);
-            }
         } else if (event instanceof VMDisconnectEvent) {
             handleVMDisconnectEvent((VMDisconnectEvent) event);
         }
@@ -53,14 +54,14 @@ public class ScriptableDebugger {
 
     private void waitForUserCommand() {
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter 'step' to continue step-by-step or anything else to run to completion: ");
-        String input = scanner.nextLine();
-        if (input.equalsIgnoreCase("step")) {
-            stepMode = true;
-        } else {
-            stepMode = false;
-            disableAllStepRequests();
-            vm.resume();
+        System.out.print("Enter command (step/step-over/continue): ");
+        String input = scanner.nextLine().trim();
+
+        try {
+            commandManager.executeCommand(input);
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            waitForUserCommand(); // Redemande une commande en cas d'erreur
         }
     }
 
