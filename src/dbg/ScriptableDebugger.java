@@ -59,30 +59,40 @@ public class ScriptableDebugger {
 
 
     public void startDebugger() throws VMDisconnectedException, InterruptedException, AbsentInformationException {
-        EventSet eventSet = null;
+        EventSet eventSet;
         while ((eventSet = vm.eventQueue().remove()) != null) {
             for (Event event : eventSet) {
-                if (event instanceof ClassPrepareEvent) {
-                    setBreakPoint(debugClass.getName(), 6);
-                }
-                if (event instanceof BreakpointEvent) {
-                    enableStepRequest((BreakpointEvent) event);
-                }
-                if(event instanceof VMDisconnectEvent) {
-                    System.out.println("End of program");
-                    InputStreamReader reader = new InputStreamReader(vm.process().getInputStream());
-                    OutputStreamWriter writer = new OutputStreamWriter(System.out);
-                    try {
-                        reader.transferTo(writer);
-                        writer.flush();
-                    } catch (IOException e) {
-                        System.out.println("Target VM input stream reading error.");
-                    }
-                }
+                handleEvent(event);
                 System.out.println(event.toString());
                 vm.resume();
             }
         }
+    }
+
+    private void handleEvent(Event event) throws AbsentInformationException {
+        if (event instanceof ClassPrepareEvent) {
+            handleClassPrepareEvent((ClassPrepareEvent) event);
+        } else if (event instanceof BreakpointEvent) {
+            enableStepRequest((BreakpointEvent) event);
+        } else if (event instanceof VMDisconnectEvent) {
+            handleVMDisconnectEvent((VMDisconnectEvent) event);
+        }
+    }
+
+    private void handleVMDisconnectEvent(VMDisconnectEvent event) {
+        System.out.println("End of program");
+        InputStreamReader reader = new InputStreamReader(vm.process().getInputStream());
+        OutputStreamWriter writer = new OutputStreamWriter(System.out);
+        try {
+            reader.transferTo(writer);
+            writer.flush();
+        } catch (IOException e) {
+            System.out.println("Target VM input stream reading error.");
+        }
+    }
+
+    private void handleClassPrepareEvent(ClassPrepareEvent event) throws AbsentInformationException {
+        setBreakPoint(debugClass.getName(), 6);
     }
 
     public void enableStepRequest(LocatableEvent event) {
