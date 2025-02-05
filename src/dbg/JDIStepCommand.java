@@ -4,20 +4,27 @@ import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.request.StepRequest;
 
-public class JDIStepCommand extends JDIAbstractDebuggerCommand {
+public class JDIStepCommand extends JDIAbstractDebuggerCommand<Void> {
   public JDIStepCommand(VirtualMachine vm, ThreadReference thread) {
     super(vm, thread);
   }
 
   @Override
-  public void execute() {
-    StepRequest stepRequest = vm.eventRequestManager()
-        .createStepRequest(currentThread,
-            StepRequest.STEP_MIN,
-            StepRequest.STEP_INTO);
-    stepRequest.enable();
+  public Void execute() {
+    try {
+      clearStepRequests();
+      StepRequest stepRequest = vm.eventRequestManager()
+          .createStepRequest(currentThread,
+              StepRequest.STEP_LINE,  // Changed from STEP_MIN
+              StepRequest.STEP_INTO);
+      stepRequest.addClassFilter("dbg.*");  // Filtre pour rester dans notre package
+      stepRequest.enable();
+      vm.resume();
+    } catch (Exception e) {
+      System.out.println("Error in step: " + e.getMessage());
+    }
+    return null;
   }
-
   @Override
   public String getName() {
     return "step";

@@ -3,14 +3,16 @@ package dbg;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
 
-public class JDIContinueCommand extends JDIAbstractDebuggerCommand {
+public class JDIContinueCommand extends JDIAbstractDebuggerCommand<Void> {
   public JDIContinueCommand(VirtualMachine vm, ThreadReference thread) {
     super(vm, thread);
   }
 
   @Override
-  public void execute() {
+  public Void execute() {
+    clearStepRequests();
     vm.resume();
+    return null;
   }
 
   @Override
