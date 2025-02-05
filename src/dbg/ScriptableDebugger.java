@@ -34,6 +34,7 @@ public class ScriptableDebugger {
         commandManager.registerCommand(new JDIStepOverCommand(vm, currentThread));
         commandManager.registerCommand(new JDIContinueCommand(vm, currentThread));
         commandManager.registerCommand(new JDIFrameCommand(vm, currentThread));
+        commandManager.registerCommand(new JDITemporariesCommand(vm, currentThread)); // Ajout de la nouvelle commande
     }
     public VirtualMachine connectAndLaunchVM() throws IOException, IllegalConnectorArgumentsException, VMStartException {
         LaunchingConnector launchingConnector = Bootstrap.virtualMachineManager().defaultConnector();
