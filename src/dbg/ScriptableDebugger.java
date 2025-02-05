@@ -20,16 +20,20 @@ public class ScriptableDebugger {
 
     private Class debugClass;
     private VirtualMachine vm;
-    private int startLineNumber = 6;
+    private int startLineNumber;
     private boolean stepMode = false;
     private JDICommandManager commandManager;
     private ThreadReference currentThread;
+    public ScriptableDebugger(int startLineNumber) {
+        this.startLineNumber = startLineNumber;
+    }
     // ... autres méthodes inchangées ...
     public void initializeCommands() {
         commandManager = new JDICommandManager();
         commandManager.registerCommand(new JDIStepCommand(vm, currentThread));
         commandManager.registerCommand(new JDIStepOverCommand(vm, currentThread));
         commandManager.registerCommand(new JDIContinueCommand(vm, currentThread));
+        commandManager.registerCommand(new JDIFrameCommand(vm, currentThread));
     }
     public VirtualMachine connectAndLaunchVM() throws IOException, IllegalConnectorArgumentsException, VMStartException {
         LaunchingConnector launchingConnector = Bootstrap.virtualMachineManager().defaultConnector();
