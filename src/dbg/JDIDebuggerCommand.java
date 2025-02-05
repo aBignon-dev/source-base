@@ -1,6 +1,6 @@
 package dbg;
 
 public interface JDIDebuggerCommand<T> {
-  T execute();
-  String getName();
+  T execute();  // execute la commande
+  String getName(); // retourne le nom
 }

@@ -11,7 +11,7 @@ public class JDIContinueCommand extends JDIAbstractDebuggerCommand<Void> {
   @Override
   public Void execute() {
     clearStepRequests();
-    vm.resume();
+    vm.resume(); // continue l'exécution
     return null;
   }
 

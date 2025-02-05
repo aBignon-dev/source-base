@@ -11,23 +11,21 @@ public class JDIFrameCommand extends JDIAbstractDebuggerCommand<StackFrame> {
   public StackFrame execute() {
     try {
       StackFrame currentFrame = currentThread.frame(0);
-      // Affiche les informations sur la frame
-      System.out.println("Current frame:");
-      System.out.println("  Location: " + currentFrame.location());
+      System.out.println("Frame actuelle:");
+      System.out.println("  Position: " + currentFrame.location());
       try {
-        System.out.println("  Line number: " + currentFrame.location().lineNumber());
-        System.out.println("  Method: " + currentFrame.location().method());
-        // Affiche les variables locales si possible
-        System.out.println("  Local variables:");
+        System.out.println("  Numéro de ligne: " + currentFrame.location().lineNumber());
+        System.out.println("  Méthode: " + currentFrame.location().method());
+        System.out.println("  Variables locales:");
         for (LocalVariable var : currentFrame.visibleVariables()) {
           System.out.println("    " + var.name() + " = " + currentFrame.getValue(var));
         }
       } catch (AbsentInformationException e) {
-        System.out.println("  (Debug information not available)");
+        System.out.println("  (Info de debug pas dispo)");
       }
       return currentFrame;
     } catch (IncompatibleThreadStateException e) {
-      System.out.println("Cannot get frame: thread not suspended");
+      System.out.println("Impossible d'obtenir la frame: thread pas suspendu");
       return null;
     }
   }

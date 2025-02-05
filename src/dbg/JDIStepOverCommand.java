@@ -15,13 +15,13 @@ public class JDIStepOverCommand extends JDIAbstractDebuggerCommand<Void> {
       clearStepRequests();
       StepRequest stepRequest = vm.eventRequestManager()
           .createStepRequest(currentThread,
-              StepRequest.STEP_LINE,  // Changed from STEP_MIN
+              StepRequest.STEP_LINE,
               StepRequest.STEP_OVER);
-      stepRequest.addClassFilter("dbg.*");  // Filtre pour rester dans notre package
+      stepRequest.addClassFilter("dbg.*"); // reste dans notre package
       stepRequest.enable();
       vm.resume();
     } catch (Exception e) {
-      System.out.println("Error in step-over: " + e.getMessage());
+      System.out.println("Erreur step-over: " + e.getMessage());
     }
     return null;
   }

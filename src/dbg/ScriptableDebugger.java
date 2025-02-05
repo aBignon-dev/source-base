@@ -17,25 +17,30 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class ScriptableDebugger {
+    private Class debugClass; // classe a debugger
+    private VirtualMachine vm; // machine virtuelle
+    private int startLineNumber; // ligne de depart
+    private boolean stepMode = false; // mode pas a pas
+    private JDICommandManager commandManager; // gestionnaire de commandes
+    private ThreadReference currentThread; // thread actuel
 
-    private Class debugClass;
-    private VirtualMachine vm;
-    private int startLineNumber;
-    private boolean stepMode = false;
-    private JDICommandManager commandManager;
-    private ThreadReference currentThread;
+    // constructeur basique
     public ScriptableDebugger(int startLineNumber) {
         this.startLineNumber = startLineNumber;
     }
-    // ... autres méthodes inchangées ...
+
+    // initialise toutes les commandes dispo
     public void initializeCommands() {
         commandManager = new JDICommandManager();
         commandManager.registerCommand(new JDIStepCommand(vm, currentThread));
         commandManager.registerCommand(new JDIStepOverCommand(vm, currentThread));
         commandManager.registerCommand(new JDIContinueCommand(vm, currentThread));
         commandManager.registerCommand(new JDIFrameCommand(vm, currentThread));
-        commandManager.registerCommand(new JDITemporariesCommand(vm, currentThread)); // Ajout de la nouvelle commande
+        commandManager.registerCommand(new JDITemporariesCommand(vm, currentThread));
+        commandManager.registerCommand(new JDIStackCommand(vm, currentThread));
     }
+
+    // connexion a la vm de debug
     public VirtualMachine connectAndLaunchVM() throws IOException, IllegalConnectorArgumentsException, VMStartException {
         LaunchingConnector launchingConnector = Bootstrap.virtualMachineManager().defaultConnector();
         Map<String, Connector.Argument> arguments = launchingConnector.defaultArguments();
@@ -44,6 +49,7 @@ public class ScriptableDebugger {
         return vm;
     }
 
+    // gere les événements qui arrivent
     private void handleEvent(Event event) throws AbsentInformationException {
         if (event instanceof ClassPrepareEvent) {
             handleClassPrepareEvent((ClassPrepareEvent) event);
@@ -57,51 +63,27 @@ public class ScriptableDebugger {
         }
     }
 
+    // attend que l'utilisateur tape une commande
     private void waitForUserCommand() {
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter command (step/step-over/continue): ");
+        System.out.print("Entrez une commande (step/step-over/continue/frame/temporaries/stack): ");
         String input = scanner.nextLine().trim();
 
         try {
             commandManager.executeCommand(input);
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
-            waitForUserCommand(); // Redemande une commande en cas d'erreur
+            waitForUserCommand(); // redemande si erreur
         }
     }
 
-    private void disableAllStepRequests() {
-        for (StepRequest request : vm.eventRequestManager().stepRequests()) {
-            request.disable();
-            vm.eventRequestManager().deleteEventRequest(request);
-        }
-    }
-
-    public void enableStepRequest(LocatableEvent event) {
-        // Disable existing step requests for the thread
-        for (StepRequest request : vm.eventRequestManager().stepRequests()) {
-            if (request.thread().equals(event.thread())) {
-                request.disable();
-                vm.eventRequestManager().deleteEventRequest(request);
-            }
-        }
-
-        // Create and enable a new step request
-        StepRequest stepRequest = vm.eventRequestManager()
-            .createStepRequest(event.thread(),
-                StepRequest.STEP_MIN,
-                StepRequest.STEP_OVER);
-        stepRequest.enable();
-    }
+    // attache le debugger a une classe
     public void attachTo(Class debuggeeClass) {
-
         this.debugClass = debuggeeClass;
         try {
             vm = connectAndLaunchVM();
             enableClassPrepareRequest(vm);
             startDebugger();
-
-
         } catch (IOException e) {
             e.printStackTrace();
         } catch (IllegalConnectorArgumentsException e) {
@@ -110,20 +92,20 @@ public class ScriptableDebugger {
             e.printStackTrace();
             System.out.println(e.toString());
         } catch (VMDisconnectedException e) {
-            System.out.println("Virtual Machine is disconnected: " + e.toString());
-        }
-        catch (Exception e) {
+            System.out.println("Machine virtuelle déconnectée: " + e.toString());
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    // active la détection de chargement de classe
     public void enableClassPrepareRequest(VirtualMachine vm) {
         ClassPrepareRequest classPrepareRequest = vm.eventRequestManager().createClassPrepareRequest();
         classPrepareRequest.addClassFilter(debugClass.getName());
         classPrepareRequest.enable();
     }
 
-
+    // lance le debugger et traite les événements
     public void startDebugger() throws VMDisconnectedException, InterruptedException, AbsentInformationException {
         EventSet eventSet;
         while ((eventSet = vm.eventQueue().remove()) != null) {
@@ -135,22 +117,25 @@ public class ScriptableDebugger {
         }
     }
 
+    // gere la déconnexion de la vm
     private void handleVMDisconnectEvent(VMDisconnectEvent event) {
-        System.out.println("End of program");
+        System.out.println("Fin du programme");
         InputStreamReader reader = new InputStreamReader(vm.process().getInputStream());
         OutputStreamWriter writer = new OutputStreamWriter(System.out);
         try {
             reader.transferTo(writer);
             writer.flush();
         } catch (IOException e) {
-            System.out.println("Target VM input stream reading error.");
+            System.out.println("Erreur lecture flux VM cible.");
         }
     }
 
+    // gere le chargement d'une classe
     private void handleClassPrepareEvent(ClassPrepareEvent event) throws AbsentInformationException {
         setBreakPoint(debugClass.getName(), startLineNumber);
     }
 
+    // met un point d'arrêt sur une ligne
     public void setBreakPoint(String className, int lineNumber) throws AbsentInformationException {
         for (ReferenceType targetClass : vm.allClasses()) {
             if (targetClass.name().equals(className)) {
@@ -160,6 +145,4 @@ public class ScriptableDebugger {
             }
         }
     }
-
-
 }

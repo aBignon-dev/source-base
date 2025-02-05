@@ -15,16 +15,17 @@ public class JDIStepCommand extends JDIAbstractDebuggerCommand<Void> {
       clearStepRequests();
       StepRequest stepRequest = vm.eventRequestManager()
           .createStepRequest(currentThread,
-              StepRequest.STEP_LINE,  // Changed from STEP_MIN
+              StepRequest.STEP_LINE,
               StepRequest.STEP_INTO);
-      stepRequest.addClassFilter("dbg.*");  // Filtre pour rester dans notre package
+      stepRequest.addClassFilter("dbg.*"); // On print que les classes de notre package.
       stepRequest.enable();
       vm.resume();
     } catch (Exception e) {
-      System.out.println("Error in step: " + e.getMessage());
+      System.out.println("Erreur step: " + e.getMessage());
     }
     return null;
   }
+
   @Override
   public String getName() {
     return "step";
