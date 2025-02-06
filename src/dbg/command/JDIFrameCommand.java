@@ -3,8 +3,8 @@ package dbg.command;
 import com.sun.jdi.*;
 
 public class JDIFrameCommand extends JDIAbstractDebuggerCommand<StackFrame> {
-  public JDIFrameCommand(VirtualMachine vm, ThreadReference thread) {
-    super(vm, thread);
+  public JDIFrameCommand(VirtualMachine vm ) {
+    super(vm);
   }
 
   @Override

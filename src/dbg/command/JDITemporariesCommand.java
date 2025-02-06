@@ -7,8 +7,8 @@ import java.util.Map;
 
 public class JDITemporariesCommand extends JDIAbstractDebuggerCommand<Map<String, Value>> {
 
-  public JDITemporariesCommand(VirtualMachine vm, ThreadReference thread) {
-    super(vm, thread);
+  public JDITemporariesCommand(VirtualMachine vm ) {
+    super(vm);
   }
 
   @Override

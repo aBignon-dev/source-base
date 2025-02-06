@@ -4,8 +4,8 @@ import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
 
 public class JDIContinueCommand extends JDIAbstractDebuggerCommand<Void> {
-  public JDIContinueCommand(VirtualMachine vm, ThreadReference thread) {
-    super(vm, thread);
+  public JDIContinueCommand(VirtualMachine vm) {
+    super(vm);
   }
 
   @Override

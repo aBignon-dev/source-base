@@ -22,7 +22,7 @@ public class ScriptableDebugger {
     private int lineToStartDebug; // ligne de depart à débugger
     private JDICommandManager commandManager; // gestionnaire de commandes
     private ThreadReference currentThread; // thread actuel
-
+    public static int programCounter = 0; // compteur de programme
     // constructeur basique
     public ScriptableDebugger(int startLineNumber) {
         this.lineToStartDebug = startLineNumber;
@@ -67,6 +67,7 @@ public class ScriptableDebugger {
     //4) lance le debugger et traite les événements (Sujet TP)
     public void startDebugger() throws VMDisconnectedException, InterruptedException, AbsentInformationException {
         EventSet eventSet;
+        initializeCommands(); // 7) initialise toutes les commandes dispo
         while ((eventSet = vm.eventQueue().remove()) != null) {
             for (Event event : eventSet) {
                 handleEvent(event);
@@ -81,10 +82,14 @@ public class ScriptableDebugger {
         if (event instanceof ClassPrepareEvent) {
             handleClassPrepareEvent(); //6) gere le chargement d'une classe
         } else if (event instanceof BreakpointEvent || event instanceof StepEvent) {
+
             LocatableEvent locatableEvent = (LocatableEvent) event;
             currentThread = locatableEvent.thread();
-            initializeCommands(); // 7) initialise toutes les commandes dispo
-            waitForUserCommand(); // 8) attend que l'utilisateur tape une commande
+            JDIStepBackCommand stepBackCommand = (JDIStepBackCommand)
+                commandManager.getCommands().get("step-back");
+            stepBackCommand.setCurrentThread(currentThread);
+            stepBackCommand.recordState();
+           waitForUserCommand(); // 8) attend que l'utilisateur tape une commande
         } else if (event instanceof VMDisconnectEvent) {
             handleVMDisconnectEvent(); // 9) gere la déconnexion de la vm
         }
@@ -109,22 +114,24 @@ public class ScriptableDebugger {
     // 7) initialise toutes les commandes dispo
     public void initializeCommands() {
         commandManager = new JDICommandManager();
-        commandManager.registerCommand(new JDIStepCommand(vm, currentThread));
-        commandManager.registerCommand(new JDIStepOverCommand(vm, currentThread));
-        commandManager.registerCommand(new JDIContinueCommand(vm, currentThread));
-        commandManager.registerCommand(new JDIFrameCommand(vm, currentThread));
-        commandManager.registerCommand(new JDITemporariesCommand(vm, currentThread));
+        commandManager.registerCommand(new JDIStepCommand(vm));
+        commandManager.registerCommand(new JDIStepOverCommand(vm));
+        commandManager.registerCommand(new JDIContinueCommand(vm));
+        commandManager.registerCommand(new JDIFrameCommand(vm));
+        commandManager.registerCommand(new JDITemporariesCommand(vm));
+        commandManager.registerCommand(new JDIStepBackCommand(vm));
     }
 
 
     //8) attend que l'utilisateur tape une commande
     private void waitForUserCommand() {
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Entrez une commande (step/step-over/continue/frame/temporaries): ");
+        System.out.print("Entrez une commande (step/step-over/continue/frame/temporaries/step-back): ");
         String input = scanner.nextLine().trim();
 
         try {
-            commandManager.executeCommand(input);
+            commandManager.executeCommand(input,currentThread);
+            programCounter++;
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
             waitForUserCommand(); // redemande si erreur

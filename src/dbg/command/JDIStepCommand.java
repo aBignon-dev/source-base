@@ -5,8 +5,8 @@ import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.request.StepRequest;
 
 public class JDIStepCommand extends JDIAbstractDebuggerCommand<Void> {
-  public JDIStepCommand(VirtualMachine vm, ThreadReference thread) {
-    super(vm, thread);
+  public JDIStepCommand(VirtualMachine vm) {
+    super(vm);
   }
 
   @Override
