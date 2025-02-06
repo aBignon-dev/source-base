@@ -8,6 +8,7 @@ import com.sun.jdi.connect.VMStartException;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.ClassPrepareRequest;
+import dbg.command.*;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -18,7 +19,7 @@ import java.util.Scanner;
 public class ScriptableDebugger {
     private Class debugClass; // classe a debugger
     private VirtualMachine vm; // machine virtuelle
-    private int lineToStartDebug; // ligne de depart
+    private int lineToStartDebug; // ligne de depart à débugger
     private JDICommandManager commandManager; // gestionnaire de commandes
     private ThreadReference currentThread; // thread actuel
 
@@ -27,7 +28,7 @@ public class ScriptableDebugger {
         this.lineToStartDebug = startLineNumber;
     }
 
-    // attache le debugger a une classe (Sujet TP) 1) Point d'entrée du debugger
+    //1) attache le debugger a une classe (Sujet TP)
     public void attachTo(Class debuggeeClass) {
         this.debugClass = debuggeeClass;
         try {

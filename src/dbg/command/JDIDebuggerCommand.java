@@ -1,4 +1,4 @@
-package dbg;
+package dbg.command;
 
 public interface JDIDebuggerCommand<T> {
   T execute();  // execute la commande

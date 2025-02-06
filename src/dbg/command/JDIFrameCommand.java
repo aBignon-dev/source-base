@@ -1,4 +1,4 @@
-package dbg;
+package dbg.command;
 
 import com.sun.jdi.*;
 

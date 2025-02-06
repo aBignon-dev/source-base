@@ -1,6 +1,7 @@
-package dbg;
+package dbg.command;
 
 import com.sun.jdi.*;
+
 import java.util.HashMap;
 import java.util.Map;
 

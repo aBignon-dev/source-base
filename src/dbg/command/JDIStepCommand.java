@@ -1,11 +1,11 @@
-package dbg;
+package dbg.command;
 
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.request.StepRequest;
 
-public class JDIStepOverCommand extends JDIAbstractDebuggerCommand<Void> {
-  public JDIStepOverCommand(VirtualMachine vm, ThreadReference thread) {
+public class JDIStepCommand extends JDIAbstractDebuggerCommand<Void> {
+  public JDIStepCommand(VirtualMachine vm, ThreadReference thread) {
     super(vm, thread);
   }
 
@@ -16,18 +16,18 @@ public class JDIStepOverCommand extends JDIAbstractDebuggerCommand<Void> {
       StepRequest stepRequest = vm.eventRequestManager()
           .createStepRequest(currentThread,
               StepRequest.STEP_LINE,
-              StepRequest.STEP_OVER);
-      stepRequest.addClassFilter("dbg.*"); // reste dans notre package
+              StepRequest.STEP_INTO);
+      stepRequest.addClassFilter("dbg.*"); // On print que les classes de notre package.
       stepRequest.enable();
       vm.resume();
     } catch (Exception e) {
-      System.out.println("Erreur step-over: " + e.getMessage());
+      System.out.println("Erreur step: " + e.getMessage());
     }
     return null;
   }
 
   @Override
   public String getName() {
-    return "step-over";
+    return "step";
   }
 }
