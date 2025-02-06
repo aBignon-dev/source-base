@@ -95,7 +95,7 @@ public class ScriptableDebugger {
         setBreakPoint(debugClass.getName(), lineToStartDebug);
     }
 
-    //6.5) met un point d'arrêt sur une ligne (Sujet TP)
+    //6.5) met un point d'arrêt sur la ligne spécifié (Sujet TP)
     public void setBreakPoint(String className, int lineNumber) throws AbsentInformationException {
         for (ReferenceType targetClass : vm.allClasses()) {
             if (targetClass.name().equals(className)) {
