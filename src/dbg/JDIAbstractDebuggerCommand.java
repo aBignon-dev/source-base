@@ -7,7 +7,7 @@ import com.sun.jdi.request.StepRequest;
 
 public abstract class JDIAbstractDebuggerCommand<T> implements JDIDebuggerCommand<T> {
   protected final VirtualMachine vm;
-  protected final ThreadReference currentThread; // thread actuel
+  protected final ThreadReference currentThread; // Référence au thread actuel en cours de débogage
 
   public JDIAbstractDebuggerCommand(VirtualMachine vm, ThreadReference thread) {
     this.vm = vm;

@@ -12,12 +12,12 @@ J'ai choisi une architecture basée sur le pattern Command pour gerer les differ
 ## Fonctionnalitées implementées
 - Execution pas à pas (step) (Commande : step)
 - Step over pour passer les appels de methodes (Commande : step-over)
-- Affichage de la stack trace (Commande : stack)
 - Visualisation des variables temporaires (Commande : temporaries)
 - Affichage de la frame courante (Commande : frame)
+- Continué l'execution classique du programme sans point d'arrêt (Commande : continue)
 
 ## Choix techniques
-Pour la conception, j'ai decidé de:
+Pour la conception, j'ai decidé de :
 - Separer clairement les responsabilitées entre les différentes classes
 - Utiliser des commandes pour faciliter l'ajout de nouvelles fonctionnalitées
 - Gerer proprement les evenements JDI pour eviter les bugs
@@ -25,12 +25,8 @@ Pour la conception, j'ai decidé de:
 
 ## Difficultées rencontrées
 La principale difficulté a été de comprendre comment marche JDI, notament:
-- La gestion des evenements qui est pas super intuitive
 - Les different types de step (into, over, etc)
-- La recuperation des variables locales qui necessite pas mal de code
-
-## Conclusion
-Ce projet m'a permit de mieu comprendre le fonctionement interne d'un debugger. J'ai appris beaucoup sur JDI et sur la conception d'une architecture evolutive avec le pattern Command.
+- La recuperation des variables locales
 
 ## Comment executer
 1. Compiler tout les fichiers .java
