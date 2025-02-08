@@ -4,7 +4,7 @@
 J'ai réalisé ce TP en utilisant Java Debug Interface (JDI) pour créer un debugger en ligne de commande. Le but etait de comprendre comment fonctionne un debugger de l'interieur et de mettre en place les fonctionnalitées de base.
 Il y a deux branches avec deux versions différentes :
 - default-version (contient la version rendue lors de la présentation du (Jeudi) 06/02/2025)
-- time-travel (contient la version du time-travel rendu lors de la présentation du (Vendredi) 07/02/2025)
+- time-travel (contient la version du time-travel (non fonctionnel))
 
 ## Architecture du projet
 J'ai choisi une architecture basée sur le pattern Command pour gerer les differentes actions du debugger:
